@@ -44,18 +44,12 @@ El **Analizador de Funciones Matemáticas** es una aplicación Python con interf
    cd analizador-funciones-matematicas
    ```
 
-2. Crea y activa un entorno virtual (opcional, pero recomendado):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # En Windows: venv\Scripts\activate
-   ```
-
-3. Instala las dependencias:
+2. Instala las dependencias:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Ejecuta la aplicación:
+3. Ejecuta la aplicación:
    ```bash
    python main.py
    ```
