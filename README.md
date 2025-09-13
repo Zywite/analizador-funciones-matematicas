@@ -40,7 +40,7 @@ El **Analizador de Funciones Matemáticas** es una aplicación Python con interf
 
 1. Clona el repositorio:
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
+   git clone git push https://github.com/Zywite/analizador-funciones-matematicas
    cd analizador-funciones-matematicas
    ```
 
