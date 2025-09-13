@@ -128,6 +128,3 @@ Por favor, sigue las convenciones de código (PEP 8) y documenta tus cambios.
 
 Este proyecto está bajo la [Licencia MIT](LICENSE).
 
-## Contacto
-
-Para reportar errores o sugerencias, crea un issue en el repositorio o contacta al equipo de desarrollo.
