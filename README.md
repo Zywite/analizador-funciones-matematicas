@@ -120,5 +120,5 @@ Por favor, sigue las convenciones de código (PEP 8) y documenta tus cambios.
 
 ## Licencia
 
-Este proyecto está bajo la [Licencia MIT](LICENSE).
+Este proyecto está bajo la [Licencia MIT](LICENSE.txt).
 
