@@ -1,127 +1,130 @@
 # graficos.py
 """
-Módulo para la generación de gráficos de funciones matemáticas.
-Utiliza Matplotlib para graficar funciones SymPy, incluyendo dominio, recorrido,
-intersecciones y puntos evaluados.
+Módulo para generar gráficos de funciones matemáticas utilizando Matplotlib.
+Maneja funciones simbólicas, evalúa puntos, y muestra dominio, recorrido, intersecciones
+y puntos evaluados en el gráfico. Usa notación científica para valores grandes/pequeños.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-import sympy as sp
-from analizador import AnalizadorMatematico
+from sympy import lambdify
+import math
 
 
 class GeneradorGraficos:
-    """Clase para generar gráficos de funciones con Matplotlib."""
+    """Clase para generar gráficos de funciones matemáticas con Matplotlib."""
     
-    def __init__(self):
-        self.x = sp.symbols('x')
-        self.analizador = AnalizadorMatematico()
+    def _format_number(self, value):
+        """Formatea un número con 2 decimales o en notación científica si es muy grande o pequeño."""
+        try:
+            value_float = float(value)
+            if abs(value_float) > 10000 or (abs(value_float) < 0.0001 and value_float != 0):
+                return f"{value_float:.1e}"
+            return f"{value_float:.2f}"
+        except (ValueError, TypeError):
+            return str(value)
     
-    def generar_grafico(self, funcion, valor_x=None, valor_y=None, expresion_original=""):
+    def generar_grafico(self, funcion, valor_x=None, valor_y=None, expresion_original="f(x)"):
         """
-        Genera el gráfico de una función SymPy, incluyendo dominio, recorrido,
-        intersecciones y puntos evaluados.
+        Genera un gráfico de la función dada, marcando intersecciones, puntos evaluados,
+        y mostrando dominio y recorrido en notación científica cuando corresponda.
+        
+        Args:
+            funcion: Función simbólica (SymPy) a graficar.
+            valor_x: Valor de x a evaluar (opcional).
+            valor_y: Valor de f(x) correspondiente (opcional).
+            expresion_original: Expresión de la función como string para la leyenda.
+        
+        Returns:
+            fig: Objeto de figura de Matplotlib.
         """
         fig, ax = plt.subplots(figsize=(8, 6))
-        try:
-            # Convertir la función SymPy a una función numérica
-            f_lambd = sp.lambdify(self.x, funcion, modules=['numpy'])
-            
-            # Obtener dominio, recorrido e intersecciones
-            dominio_resumen, _, restricciones_dominio = self.analizador.calcular_dominio(funcion)
-            recorrido_resumen, _ = self.analizador.calcular_recorrido(funcion)
-            inter_resumen, _ = self.analizador.calcular_intersecciones(funcion)
-            
-            # Determinar puntos excluidos del dominio
-            excluidos = []
-            for restr in restricciones_dominio:
-                if restr.rel_op == '!=':
-                    try:
-                        punto = float(restr.rhs)
-                        if -10 <= punto <= 10:  # Solo dentro del rango visible
-                            excluidos.append(punto)
-                    except:
-                        pass
-            
-            # Definir el rango del dominio, evitando discontinuidades
-            x = []
-            if not excluidos:
-                x = np.linspace(-10, 10, 1000)
-            else:
-                puntos = sorted([-10] + excluidos + [10])
-                for i in range(len(puntos)-1):
-                    start = puntos[i]
-                    end = puntos[i+1]
-                    if end - start > 0.1:  # Evitar intervalos demasiado pequeños
-                        x_mid = np.linspace(start, end, int(1000 * (end - start) / 20))
-                        x = np.concatenate([x, x_mid[:-1]]) if len(x) > 0 else x_mid[:-1]
-            
-            # Calcular valores de y
-            y = f_lambd(x)
-            y = np.where(np.abs(y) > 1e6, np.nan, y)
-            
-            # Ajustar límites de y dinámicamente
-            y_finite = y[np.isfinite(y)]
-            if len(y_finite) > 0:
-                y_min, y_max = np.min(y_finite), np.max(y_finite)
-                y_range = y_max - y_min
-                y_min -= 0.1 * y_range
-                y_max += 0.1 * y_range
-                ax.set_ylim(max(-10, y_min), min(10, y_max))
-            else:
-                ax.set_ylim(-10, 10)
-            
-            # Graficar la función
-            ax.plot(x, y, label=f"f(x) = {expresion_original}", color='blue')
-            
-            # Graficar intersecciones
+        
+        # Generar puntos para el eje x (-10 a 10, 1000 puntos)
+        x_min, x_max, num_puntos = -10, 10, 1000
+        x = [x_min + i * (x_max - x_min) / (num_puntos - 1) for i in range(num_puntos)]
+        
+        # Convertir la función simbólica a una función numérica
+        f = lambdify('x', funcion, 'math')
+        
+        # Evaluar la función en los puntos x, manejando valores no finitos
+        y = []
+        for x_val in x:
             try:
-                # Intersección con el eje Y
-                if "No definida" not in inter_resumen:
-                    y_inter = eval(inter_resumen.split(":")[1].split("\n")[0].strip()[1:-1].split(",")[1])
-                    y_inter_rounded = round(float(sp.N(y_inter, 4)), 4)
-                    ax.plot(0, y_inter, 'go', label=f"Intersección Y (0, {y_inter_rounded})")
-                
-                # Intersecciones con el eje X
-                x_inters = inter_resumen.split("Intersecciones con el eje X:")[1].strip()
-                if "No hay" not in x_inters:
-                    for inter in x_inters.split(", "):
-                        x_val = eval(inter[1:-1].split(",")[0])
-                        x_val_rounded = round(float(sp.N(x_val, 4)), 4)
-                        ax.plot(x_val, 0, 'go', label=f"Intersección X ({x_val_rounded}, 0)")
-            except:
+                y_val = f(x_val)
+                if math.isinf(y_val) or math.isnan(y_val):
+                    y.append(None)  # Usar None para discontinuidades
+                else:
+                    y.append(float(y_val))
+            except (ValueError, ZeroDivisionError, OverflowError):
+                y.append(None)  # Discontinuidades o errores
+        
+        # Graficar la función
+        ax.plot(x, y, label=f"f(x) = {expresion_original}", color='blue')
+        
+        # Marcar el punto evaluado (si se proporciona)
+        if valor_x is not None and valor_y is not None:
+            try:
+                x_float = float(valor_x)
+                y_float = float(valor_y)
+                ax.plot(x_float, y_float, 'ro', markersize=8, label=f"Punto ({self._format_number(x_float)}, {self._format_number(y_float)})")
+            except (ValueError, TypeError):
                 pass
-            
-            # Graficar el punto evaluado
-            if valor_x is not None and valor_y is not None:
-                valor_x_rounded = round(float(sp.N(valor_x, 4)), 4)
-                valor_y_rounded = round(float(sp.N(valor_y, 4)), 4)
-                ax.plot(valor_x, valor_y, 'ro', label=f"Punto ({valor_x_rounded}, {valor_y_rounded})")
-            
-            # Mostrar dominio y recorrido como texto en el gráfico
-            ax.text(0.02, 0.98, f"Dominio: {dominio_resumen}", 
-                    transform=ax.transAxes, fontsize=10, verticalalignment='top',
-                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-            ax.text(0.02, 0.92, f"Recorrido: {recorrido_resumen}", 
-                    transform=ax.transAxes, fontsize=10, verticalalignment='top',
-                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-            
-            # Configurar el gráfico
-            ax.set_xlabel("x")
-            ax.set_ylabel("f(x)")
-            ax.set_title(f"Gráfico de f(x) = {expresion_original}")
-            ax.grid(True)
-            ax.legend(loc='best')
-            ax.axhline(0, color='black', linewidth=0.5)
-            ax.axvline(0, color='black', linewidth=0.5)
-            
-            # Ajustar límites de x
-            ax.set_xlim(-10, 10)
-            
-            return fig
-        except Exception as e:
-            print(f"Error al generar el gráfico: {e}")
-            ax.text(0.5, 0.5, f"Error al generar gráfico:\n{str(e)}",
-                    ha='center', va='center', transform=ax.transAxes)
-            return fig
+        
+        # Obtener intersecciones (puntos en el eje x y y)
+        from analizador import AnalizadorMatematico
+        analizador = AnalizadorMatematico()
+        inter_resumen, _ = analizador.calcular_intersecciones(funcion)
+        
+        inter_x, inter_y = [], []
+        # Parseo robusto de inter_resumen
+        for inter in inter_resumen.split('\n'):
+            if not inter.strip():
+                continue
+            try:
+                if "Intersección en X" in inter:
+                    x_val_str = inter.split('(')[1].split(',')[0].strip()
+                    x_val = float(x_val_str)
+                    inter_x.append(x_val)
+                elif "Intersección en Y" in inter:
+                    y_val_str = inter.split(',')[1].split(')')[0].strip()
+                    y_val = float(y_val_str)
+                    inter_y.append((0, y_val))
+            except (ValueError, IndexError) as e:
+                print(f"Error al parsear intersección: {inter}, {str(e)}")
+                continue
+        
+        # Graficar intersecciones con formato adecuado
+        for x_val in inter_x:
+            ax.plot(x_val, 0, 'go', markersize=8, label=f"Intersección X ({self._format_number(x_val)}, 0)")
+        for _, y_val in inter_y:
+            ax.plot(0, y_val, 'go', markersize=8, label=f"Intersección Y (0, {self._format_number(y_val)})")
+        
+        # Configurar el dominio y recorrido como texto
+        dominio_resumen, _, _ = analizador.calcular_dominio(funcion)
+        recorrido_resumen, _ = analizador.calcular_recorrido(funcion)
+        
+        ax.text(0.02, 0.98, f"Dominio: {dominio_resumen}", transform=ax.transAxes, 
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        ax.text(0.02, 0.90, f"Recorrido: {recorrido_resumen}", transform=ax.transAxes, 
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        # Configurar el gráfico
+        ax.set_xlabel("x")
+        ax.set_ylabel("f(x)")
+        ax.set_title(f"Gráfico de f(x) = {expresion_original}")
+        ax.grid(True)
+        
+        # Manejar leyenda para evitar duplicados
+        handles, labels = ax.get_legend_handles_labels()
+        unique_labels = dict(zip(labels, handles))
+        ax.legend(unique_labels.values(), unique_labels.keys())
+        
+        # Ajustar límites
+        y_valid = [v for v in y if v is not None and not math.isinf(v)]
+        if y_valid:
+            ax.set_ylim(min(y_valid) - 1, max(y_valid) + 1)
+        
+        ax.axhline(0, color='black', linewidth=0.5)
+        ax.axvline(0, color='black', linewidth=0.5)
+        
+        return fig
