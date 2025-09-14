@@ -121,8 +121,6 @@ El **Analizador de Funciones Matemáticas** es una aplicación Python con interf
 4. Sube los cambios: `git push origin mi-rama`.
 5. Crea un Pull Request en GitHub.
 
-Por favor, sigue las convenciones de código (PEP 8) y documenta tus cambios.
-
 ## Licencia
 
 Este proyecto está bajo la [Licencia MIT](LICENSE.txt).
