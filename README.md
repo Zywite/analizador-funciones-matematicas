@@ -39,7 +39,6 @@ El **Analizador de Funciones Matemáticas** es una aplicación Python con interf
 - Bibliotecas:
   - `sympy>=1.12`
   - `matplotlib>=3.7`
-  - `numpy>=1.24`
 
 ## Instalación
 
