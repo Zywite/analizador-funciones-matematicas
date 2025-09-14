@@ -1,9 +1,10 @@
 # Analizador de Funciones Matemáticas
 integrantes: 
--Joaquin Carrasco
--Benjamin Cabrera
--Renato Caceres
--Nicolas Castillo
+Joaquin Carrasco
+Benjamin Cabrera
+Renato Caceres
+Nicolas Castillo
+
 ## Descripción
 
 El **Analizador de Funciones Matemáticas** es una aplicación Python con interfaz gráfica que permite analizar funciones matemáticas ingresadas por el usuario. Proporciona un análisis detallado paso a paso (dominio, recorrido, intersecciones con los ejes, evaluación en un punto) y genera un gráfico interactivo que muestra la función, sus intersecciones, el punto evaluado, y el dominio/recorrido en notación matemática.
